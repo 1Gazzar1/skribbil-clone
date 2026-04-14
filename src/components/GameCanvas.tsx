@@ -28,6 +28,9 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
   const historyRef = useRef<ImageData[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
 
+  // Throttling draw rate (30fps)
+  const lastDrawTimeRef = useRef(0);
+
   // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,6 +103,7 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     }
 
     setIsDrawing(true);
+    lastDrawTimeRef.current = performance.now();
     ctx.beginPath();
     ctx.moveTo(coords.x, coords.y);
     
@@ -117,6 +121,13 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     e.preventDefault();
     if (!isDrawing) return;
     
+    // Throttle to 60 FPS (approx 16ms per frame)
+    const now = performance.now();
+    if (now - lastDrawTimeRef.current < 16) {
+      return;
+    }
+    lastDrawTimeRef.current = now;
+
     const coords = getCoordinates(e);
     if (!coords) return;
 
@@ -126,6 +137,8 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
 
     ctx.lineTo(coords.x, coords.y);
     ctx.stroke();
+    console.log(e)
+    console.log(coords)
   };
 
   const stopDrawing = () => {
