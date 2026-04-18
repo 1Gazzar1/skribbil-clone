@@ -24,12 +24,147 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
   const [brushSize, setBrushSize] = useState(BRUSH_SIZES[1].size);
   const [tool, setTool] = useState<"pen" | "eraser" | "bucket">("pen");
   
-  // History for Undo
-  const historyRef = useRef<ImageData[]>([]);
-  const [historyStep, setHistoryStep] = useState(-1);
+  // Record of strokes (percentages)
+  const strokesRef = useRef<any[][]>([]);
+  const [actionsCount, setActionsCount] = useState(0);
 
   // Throttling draw rate (30fps)
   const lastDrawTimeRef = useRef(0);
+
+  const bucketFill = (ctx: CanvasRenderingContext2D, startX: number, startY: number, fillColor: string) => {
+    const canvas = ctx.canvas;
+    const W = canvas.width;
+    const H = canvas.height;
+    const imgData = ctx.getImageData(0, 0, W, H);
+    const data = imgData.data;
+
+    const startPos = (startY * W + startX) * 4;
+    const sr = data[startPos];
+    const sg = data[startPos + 1];
+    const sb = data[startPos + 2];
+    const sa = data[startPos + 3];
+
+    let fr = 0, fg = 0, fb = 0;
+    if (fillColor.startsWith('#')) {
+      let hex = fillColor.slice(1);
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      fr = parseInt(hex.slice(0, 2), 16);
+      fg = parseInt(hex.slice(2, 4), 16);
+      fb = parseInt(hex.slice(4, 6), 16);
+    }
+    const fa = 255;
+
+    if (sr === fr && sg === fg && sb === fb && sa === fa) return;
+
+    const match = (p: number) => {
+      return data[p] === sr && data[p + 1] === sg && data[p + 2] === sb && data[p + 3] === sa;
+    };
+
+    const colorPixel = (p: number) => {
+      data[p] = fr;
+      data[p + 1] = fg;
+      data[p + 2] = fb;
+      data[p + 3] = fa;
+    };
+
+    const stack = [startX, startY];
+
+    while (stack.length > 0) {
+      const cy = stack.pop()!;
+      const cx = stack.pop()!;
+      let p = (cy * W + cx) * 4;
+      let y = cy;
+
+      while (y >= 0 && match(p)) {
+        y--;
+        p -= W * 4;
+      }
+
+      p += W * 4;
+      y++;
+
+      let reachLeft = false;
+      let reachRight = false;
+
+      while (y < H && match(p)) {
+        colorPixel(p);
+
+        if (cx > 0) {
+          if (match(p - 4)) {
+            if (!reachLeft) {
+              stack.push(cx - 1, y);
+              reachLeft = true;
+            }
+          } else {
+            reachLeft = false;
+          }
+        }
+
+        if (cx < W - 1) {
+          if (match(p + 4)) {
+            if (!reachRight) {
+              stack.push(cx + 1, y);
+              reachRight = true;
+            }
+          } else {
+            reachRight = false;
+          }
+        }
+
+        y++;
+        p += W * 4;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  };
+
+  const redrawCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (const stroke of strokesRef.current) {
+      if (!stroke || stroke.length === 0) continue;
+      const firstPt = stroke[0];
+      const t = firstPt.tool;
+
+      if (t === "clear") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        continue;
+      }
+
+      if (t === "bucket") {
+        bucketFill(ctx, Math.round(firstPt.x * canvas.width), Math.round(firstPt.y * canvas.height), firstPt.color);
+        continue;
+      }
+
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = firstPt.size;
+      ctx.strokeStyle = t === "eraser" ? "#ffffff" : firstPt.color;
+
+      ctx.beginPath();
+      if (stroke.length === 1) {
+        const ax = stroke[0].x * canvas.width;
+        const ay = stroke[0].y * canvas.height;
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+      } else {
+        for (let i = 0; i < stroke.length; i++) {
+          const ax = stroke[i].x * canvas.width;
+          const ay = stroke[i].y * canvas.height;
+          if (i === 0) ctx.moveTo(ax, ay);
+          else ctx.lineTo(ax, ay);
+        }
+        ctx.stroke();
+      }
+    }
+  };
 
   // Initialize canvas
   useEffect(() => {
@@ -37,26 +172,21 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Set actual size in memory (scaled to account for display size)
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Save initial blank state
-    saveHistoryState(canvas, ctx);
+
+    redrawCanvas();
 
     const handleResize = () => {
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.putImageData(imgData, 0, 0);
+      redrawCanvas();
     };
 
     window.addEventListener("resize", handleResize);
@@ -64,15 +194,18 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const saveHistoryState = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
-    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const newHistory = historyRef.current.slice(0, historyStep + 1);
-    newHistory.push(data);
-    historyRef.current = newHistory;
-    setHistoryStep(newHistory.length - 1);
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+  const getCoordinatesPct = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -84,13 +217,13 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
       x = (e as React.MouseEvent).clientX - rect.left;
       y = (e as React.MouseEvent).clientY - rect.top;
     }
-    return { x, y };
+    return { x: x / canvas.width, y: y / canvas.height };
   };
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     if (gameState && gameState !== "drawing") return;
     e.preventDefault();
-    const coords = getCoordinates(e);
+    const coords = getCoordinatesPct(e);
     if (!coords) return;
 
     const canvas = canvasRef.current;
@@ -98,21 +231,32 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     if (!ctx || !canvas) return;
 
     if (tool === "bucket") {
-      fillCanvas();
+      const newAction = [{ x: coords.x, y: coords.y, color, size: brushSize, tool: "bucket" }];
+      strokesRef.current = [...strokesRef.current, newAction];
+      setActionsCount(strokesRef.current.length);
+      bucketFill(ctx, Math.round(coords.x * canvas.width), Math.round(coords.y * canvas.height), color);
       return;
     }
 
     setIsDrawing(true);
     lastDrawTimeRef.current = performance.now();
+    
+    const startPoint = { x: coords.x, y: coords.y, color, size: brushSize, tool };
+    strokesRef.current = [...strokesRef.current, [startPoint]];
+    setActionsCount(strokesRef.current.length);
+
+    const absX = coords.x * canvas.width;
+    const absY = coords.y * canvas.height;
+
     ctx.beginPath();
-    ctx.moveTo(coords.x, coords.y);
+    ctx.moveTo(absX, absY);
     
     // Draw a single dot if it's just a click
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = tool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = brushSize;
-    ctx.lineTo(coords.x, coords.y);
+    ctx.lineTo(absX, absY);
     ctx.stroke();
   };
 
@@ -123,22 +267,31 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     
     // Throttle to 60 FPS (approx 16ms per frame)
     const now = performance.now();
-    if (now - lastDrawTimeRef.current < 16) {
+    const FPS = 60; 
+    const interval = 1000 / FPS; 
+    if (now - lastDrawTimeRef.current < interval) {
       return;
     }
     lastDrawTimeRef.current = now;
 
-    const coords = getCoordinates(e);
+    const coords = getCoordinatesPct(e);
     if (!coords) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!ctx) return;
+    if (!ctx || !canvas) return;
 
-    ctx.lineTo(coords.x, coords.y);
+    // Push to current stroke
+    const currentStroke = strokesRef.current[strokesRef.current.length - 1];
+    if (currentStroke) {
+      currentStroke.push({ x: coords.x, y: coords.y, color, size: brushSize, tool });
+    }
+
+    const absX = coords.x * canvas.width;
+    const absY = coords.y * canvas.height;
+
+    ctx.lineTo(absX, absY);
     ctx.stroke();
-    console.log(e)
-    console.log(coords)
   };
 
   const stopDrawing = () => {
@@ -147,30 +300,16 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
       const ctx = canvas?.getContext("2d");
       if (canvas && ctx) {
         ctx.closePath();
-        saveHistoryState(canvas, ctx);
       }
       setIsDrawing(false);
     }
   };
 
-  const fillCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveHistoryState(canvas, ctx);
-  };
-
   const undo = () => {
-    if (historyStep > 0) {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!canvas || !ctx) return;
-      
-      const newStep = historyStep - 1;
-      ctx.putImageData(historyRef.current[newStep], 0, 0);
-      setHistoryStep(newStep);
+    if (strokesRef.current.length > 0) {
+      strokesRef.current = strokesRef.current.slice(0, -1);
+      setActionsCount(strokesRef.current.length);
+      redrawCanvas();
     }
   };
 
@@ -178,9 +317,10 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
+    strokesRef.current = [...strokesRef.current, [{ x: 0, y: 0, color: "#ffffff", size: 0, tool: "clear" }]];
+    setActionsCount(strokesRef.current.length);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveHistoryState(canvas, ctx);
   };
 
   return (
@@ -299,7 +439,7 @@ export function GameCanvas({ gameState }: { gameState?: GameState }) {
           <div className="flex gap-2">
             <button 
               onClick={undo}
-              disabled={historyStep <= 0}
+              disabled={actionsCount <= 0}
               className="p-3 bg-blue-50 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl border border-blue-200 transition-all text-slate-400 hover:text-slate-700 shadow-sm" 
               title="Undo"
             >
