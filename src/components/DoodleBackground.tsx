@@ -14,23 +14,28 @@ export function DoodleBackground() {
   const grid = useMemo(() => {
     const items = [];
     const numRows = 8;
-    const numCols = 15;
+    const numCols = 16;
     
     for (let r = 0; r < numRows; r++) {
       for (let c = 0; c < numCols; c++) {
         // Randomly pick a doodle
         const doodle = DOODLES[Math.floor(Math.random() * DOODLES.length)];
+        const isWhiteTile = (r + c) % 2 === 0;
+
         items.push(
-          <div key={`${r}-${c}`} className="flex items-center justify-center p-6 w-[150px] h-[150px]">
-            {/* 
-              By using mix-blend-mode: multiply, any white backgrounds in the SVGs will 
-              become completely transparent against the light blue container background, 
-              while the black lines stay perfectly intact! 
-            */}
+          <div 
+            key={`${r}-${c}`} 
+            className={`flex items-center rounded-2xl justify-center p-6 w-[150px] h-[150px] ${isWhiteTile ? 'bg-white' : 'bg-zinc-950'}`}
+          >
             <img 
               src={doodle} 
               alt="" 
-              className="w-full h-full object-contain opacity-10 hover:opacity-20 transition-opacity duration-300 pointer-events-auto mix-blend-multiply" 
+              className={`w-full h-full object-contain hover:scale-110 transition-all duration-300 pointer-events-auto ${
+                isWhiteTile 
+                  ? 'opacity-60 hover:opacity-100 mix-blend-multiply' 
+                  : 'opacity-50 hover:opacity-100 mix-blend-screen'
+              }`}
+              style={{ filter: isWhiteTile ? 'none' : 'invert(1) brightness(1.5)' }}
             />
           </div>
         );
@@ -40,13 +45,13 @@ export function DoodleBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-sky-50">
-      <div className="absolute top-0 left-0 w-[4500px] h-[2400px] flex flex-wrap animate-[scroll-bg_240s_linear_infinite]">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-zinc-950">
+      <div className="absolute top-0 left-0 w-[4800px] h-[2400px] flex flex-wrap animate-[scroll-bg_240s_linear_infinite]">
         {/* We need 4 quadrants to make diagonal scrolling seamless */}
-        <div className="flex flex-wrap w-[2250px] h-[1200px] shrink-0 content-start">{grid}</div>
-        <div className="flex flex-wrap w-[2250px] h-[1200px] shrink-0 content-start">{grid}</div>
-        <div className="flex flex-wrap w-[2250px] h-[1200px] shrink-0 content-start">{grid}</div>
-        <div className="flex flex-wrap w-[2250px] h-[1200px] shrink-0 content-start">{grid}</div>
+        <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
+        <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
+        <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
+        <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
       </div>
     </div>
   );
