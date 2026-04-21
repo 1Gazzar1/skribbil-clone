@@ -6,25 +6,25 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; 
-    --foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --background: 0 0% 100%; 
+    --foreground: 0 0% 0%;
+    --primary: 0 80% 50%; /* Hot pink */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%; 
+    --card-foreground: 0 0% 0%; 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 47 100% 50%;
-    --accent-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 330 100% 54%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 80%;
+    --input: 0 0% 80%;
+    --ring: 330 100% 54%;
     --radius: 1rem;
   }
 }
@@ -46,18 +46,18 @@
 
 @layer utilities {
   .playful-border {
-    @apply border-2 border-blue-200 rounded-2xl;
+    @apply border-2 border-zinc-300 rounded-2xl;
   }
   
   .playful-shadow {
-    @apply shadow-[0px_4px_0px_0px_rgba(0,0,0,0.1)];
+    @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
   }
 
   .playful-shadow-sm {
-    @apply shadow-[0px_2px_0px_0px_rgba(0,0,0,0.1)];
+    @apply shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
   }
 
   .playful-hover {
-    @apply hover:-translate-y-1 hover:shadow-[0px_6px_0px_0px_rgba(0,0,0,0.1)] active:translate-y-1 active:shadow-none transition-all;
+    @apply border-2 border-black hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all;
   }
 }

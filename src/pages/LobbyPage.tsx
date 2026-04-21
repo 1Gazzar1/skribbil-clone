@@ -53,27 +53,27 @@ export default function LobbyPage() {
     navigate("/")
   }
   return (
-    <div className="flex justify-center min-h-screen p-4 overflow-hidden text-slate-800">
+    <div className="relative flex justify-center min-h-screen p-4 overflow-hidden text-slate-800 pointer-events-none z-20">
       
       {/* Container */}
-      <div className="w-full max-w-5xl flex gap-8 my-auto max-h-[90vh] flex-col md:flex-row">
+      <div className="w-full max-w-5xl flex gap-8 my-auto max-h-[90vh] flex-col md:flex-row pointer-events-auto">
         
         {/* Left column: Players & Room Code */}
         <div className="flex flex-col gap-8 md:w-2/3">
           
-          <div className="flex flex-col items-center p-8 bg-white rounded-3xl playfully border border-blue-200 playful-shadow">
+          <div className="flex flex-col items-center p-8 bg-white rounded-3xl border-4 border-black playful-shadow">
             <h2 className="text-xl font-bold mb-3 text-slate-500 uppercase tracking-widest">Room Code</h2>
-            <div className="flex items-center gap-4 bg-blue-50 py-3 px-6 rounded-2xl border-2 border-blue-200">
+            <div className="flex items-center gap-4 bg-zinc-100 py-3 px-6 rounded-2xl border-2 border-zinc-300">
               <span className="text-5xl font-black tracking-widest text-primary">{roomCode}</span>
-              <button className="playful-hover p-2 bg-white rounded-xl border-2 border-blue-200 text-slate-500 hover:text-primary transition-colors">
+              <button className="playful-hover p-2 bg-white rounded-xl border-2 border-zinc-300 text-slate-500 hover:text-primary transition-colors">
                 <Copy size={24} />
               </button>
             </div>
             <p className="mt-4 text-slate-500 font-semibold">Share this code with your friends!</p>
           </div>
 
-          <div className="flex-1 p-6 bg-white rounded-3xl border border-blue-200 playful-shadow overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-blue-100">
+          <div className="flex-1 p-6 bg-white rounded-3xl border-4 border-black playful-shadow overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-zinc-200">
               <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
                 <Users className="text-primary" size={28} />
                 Players <span className="text-slate-400 text-lg">({players?.length || 0}/{room?.maxPlayers || 8})</span>
@@ -87,7 +87,7 @@ export default function LobbyPage() {
                 const isPlayerHost = room?.hostId === player.id;
                 
                 return (
-                  <div key={player.id} className="flex items-center justify-between bg-blue-50 p-3 rounded-2xl border border-blue-100 transition-transform hover:-translate-y-1 hover:shadow-sm">
+                  <div key={player.id} className="flex items-center justify-between bg-zinc-100 p-3 rounded-2xl border border-zinc-300 transition-transform hover:-translate-y-1 hover:shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className={`w-14 h-14 flex items-center justify-center rounded-xl bg-white border-2 border-transparent ${color} bg-opacity-20`}>
                         <Icon size={28} className={color.replace('bg-', 'text-')} strokeWidth={2.5} />
@@ -95,7 +95,7 @@ export default function LobbyPage() {
                       <span className="text-xl font-bold text-slate-700">{player.username} {playerId === player.id ? "(You)" : ""}</span>
                     </div>
                     {isPlayerHost && (
-                      <Crown className="text-amber-400 fill-amber-400" size={24} />
+                      <Crown className="text-primary fill-primary" size={24} />
                     )}
                   </div>
                 );
@@ -112,8 +112,8 @@ export default function LobbyPage() {
         {/* Right column: Settings & Start block */}
         <div className="flex flex-col gap-8 md:w-1/3">
           
-          <div className="flex-1 p-6 bg-white rounded-3xl border border-blue-200 playful-shadow flex flex-col">
-            <div className="flex items-center gap-2 mb-6 pb-4 border-b-2 border-blue-100">
+          <div className="flex-1 p-6 bg-white rounded-3xl border-4 border-black playful-shadow flex flex-col">
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b-2 border-zinc-200">
               <Settings className="text-slate-400" size={28} />
               <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
             </div>
@@ -122,7 +122,7 @@ export default function LobbyPage() {
               <div className="space-y-2">
                 <label className="font-bold text-slate-600 text-sm uppercase">Rounds</label>
                 <select 
-                  className="w-full bg-blue-50 text-slate-800 border-2 border-blue-200 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
+                  className="w-full bg-zinc-100 text-slate-800 border-2 border-zinc-300 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
                   value={room?.noOfRounds}
                   onChange={(e) => {setRounds(+e.target.value);}}
                   disabled={!isHost}
@@ -138,7 +138,7 @@ export default function LobbyPage() {
               <div className="space-y-2">
                 <label className="font-bold text-slate-600 text-sm uppercase">Draw Time (seconds)</label>
                 <select 
-                  className="w-full bg-blue-50 text-slate-800 border-2 border-blue-200 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
+                  className="w-full bg-zinc-100 text-slate-800 border-2 border-zinc-300 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
                   value={room?.turnDuration}
                   onChange={(e) => {setDrawTime(+e.target.value);}}
                   disabled={!isHost}
@@ -153,13 +153,13 @@ export default function LobbyPage() {
 
             </div>
 
-            <div className="pt-6 mt-4 border-t-2 border-blue-100">
+            <div className="pt-6 mt-4 border-t-2 border-zinc-200">
               {isHost ? (
-                <Button className="w-full text-xl font-bold h-16 bg-primary text-white hover:bg-blue-600 rounded-xl playful-hover shadow-sm" onClick={() => navigate("/game")}>
+                <Button className="w-full text-xl font-bold h-16 bg-primary text-white hover:bg-pink-600 rounded-xl playful-hover shadow-sm" onClick={() => navigate("/game")}>
                   Start Game
                 </Button>
               ) : (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
+                <div className="bg-zinc-100 border-2 border-zinc-300 rounded-xl p-4 text-center">
                   <p className="font-bold text-slate-500">Waiting for host to start...</p>
                 </div>
               )}

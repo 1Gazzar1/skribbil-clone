@@ -25,15 +25,15 @@ export function DoodleBackground() {
         items.push(
           <div 
             key={`${r}-${c}`} 
-            className={`flex items-center rounded-2xl justify-center p-6 w-[150px] h-[150px] ${isWhiteTile ? 'bg-white' : 'bg-zinc-950'}`}
+            className={`flex items-center rounded-2xl hover:p-2 transition-all duration-300 justify-center p-6 w-[150px] h-[150px] ${isWhiteTile ? 'bg-white' : 'bg-zinc-950'}`}
           >
             <img 
               src={doodle} 
               alt="" 
-              className={`w-full h-full object-contain hover:scale-110 transition-all duration-300 pointer-events-auto ${
+              className={`w-full h-full object-contain  pointer-events-auto ${
                 isWhiteTile 
-                  ? 'opacity-60 hover:opacity-100 mix-blend-multiply' 
-                  : 'opacity-50 hover:opacity-100 mix-blend-screen'
+                  ? 'opacity-60 hover:opacity-100 transition-all duration-300 mix-blend-multiply' 
+                  : 'opacity-50 hover:opacity-100 transition-all duration-300 mix-blend-screen'
               }`}
               style={{ filter: isWhiteTile ? 'none' : 'invert(1) brightness(1.5)' }}
             />
@@ -45,7 +45,7 @@ export function DoodleBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-zinc-950">
+    <div className="fixed inset-0 z-0 overflow-hidden bg-zinc-950">
       <div className="absolute top-0 left-0 w-[4800px] h-[2400px] flex flex-wrap animate-[scroll-bg_240s_linear_infinite]">
         {/* We need 4 quadrants to make diagonal scrolling seamless */}
         <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
@@ -53,6 +53,8 @@ export function DoodleBackground() {
         <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
         <div className="flex flex-wrap w-[2400px] h-[1200px] shrink-0 content-start">{grid}</div>
       </div>
+      {/* Dim overlay — sits above the grid but below page content */}
+      <div className="absolute inset-0 bg-black/60 pointer-events-none z-10" />
     </div>
   );
 }

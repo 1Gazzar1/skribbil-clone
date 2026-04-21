@@ -70,12 +70,12 @@ export default function LandingPage() {
   };
   
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 rounded-3xl bg-white p-10 playful-shadow border border-blue-200">
+    <div className="relative flex min-h-screen items-center justify-center p-4 pointer-events-none z-20">
+      <div className="w-full max-w-md space-y-8 rounded-3xl bg-white p-10 playful-shadow border-4 border-black pointer-events-auto">
         <div className="text-center space-y-2">
-          <h1 className="text-5xl font-black text-primary tracking-tight">
-            Skribbil
-            <span className="text-amber-400">
+          <h1 className="text-5xl font-black text-primary tracking-tight mb-4 flex flex-col items-center">
+            <span>Skribbil</span>
+            <span className="text-white bg-black px-3 py-1 rounded-xl -rotate-3 inline-block mt-1 text-4xl">
               .clone
             </span>
           </h1>
@@ -92,15 +92,15 @@ export default function LandingPage() {
               placeholder="Enter your name..."
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="text-center text-lg font-bold bg-blue-50 border-2 border-blue-200 text-slate-800 placeholder:text-slate-400 focus-visible:ring-primary focus-visible:border-primary rounded-xl h-14 transition-colors"
+              className="text-center text-lg font-bold bg-zinc-100 border-2 border-zinc-300 text-slate-800 placeholder:text-slate-400 focus-visible:ring-primary focus-visible:border-primary rounded-xl h-14 transition-colors"
             />
           </div>
 
           <AvatarSelector selectedId={avatarId} onSelect={setAvatarId} />
 
-          <div className="pt-4 space-y-4 border-t-2 border-blue-100">
+          <div className="pt-4 space-y-4 border-t-2 border-zinc-200">
             <Button
-              className="w-full text-xl font-bold h-14 bg-primary text-white hover:bg-blue-600 rounded-xl playful-hover shadow-sm"
+              className="w-full text-xl font-bold h-14 bg-primary text-white hover:bg-pink-600 rounded-xl playful-hover shadow-sm"
               size="lg"
               onClick={handleHost}
             >
@@ -108,9 +108,9 @@ export default function LandingPage() {
             </Button>
             
             <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t-2 border-blue-100"></div>
+              <div className="flex-grow border-t-2 border-zinc-200"></div>
               <span className="flex-shrink-0 px-4 text-slate-400 font-bold text-sm tracking-widest uppercase">OR</span>
-              <div className="flex-grow border-t-2 border-blue-100"></div>
+              <div className="flex-grow border-t-2 border-zinc-200"></div>
             </div>
 
             <div className="flex space-x-3">
@@ -118,12 +118,12 @@ export default function LandingPage() {
                 placeholder="ROOM CODE"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
-                className="text-center uppercase text-xl font-bold bg-blue-50 border-2 border-blue-200 text-slate-800 rounded-xl h-14"
+                className="text-center uppercase text-xl font-bold bg-zinc-100 border-2 border-zinc-300 text-slate-800 rounded-xl h-14"
               />
               <Button
                 size="lg"
                 onClick={handleJoin}
-                className="text-lg font-bold h-14 px-8 bg-amber-400 text-amber-950 hover:bg-amber-500 rounded-xl playful-hover shadow-sm"
+                className="text-lg font-bold h-14 px-8 bg-black text-white hover:bg-zinc-800 rounded-xl playful-hover shadow-sm"
               >
                 Join
               </Button>

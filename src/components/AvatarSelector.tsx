@@ -30,7 +30,7 @@ export function AvatarSelector({ onSelect, selectedId }: AvatarSelectorProps) {
               className={`flex h-20 w-20 items-center justify-center rounded-2xl border-4 ${
                 isSelected
                   ? "border-primary shadow-md scale-110"
-                  : "border-transparent bg-blue-50 playful-shadow-sm hover:scale-105"
+                  : "border-transparent bg-zinc-100 playful-shadow-sm hover:scale-105"
               } ${avatar.color} transition-all duration-200 text-white hover:opacity-90`}
             >
               <Icon size={40} strokeWidth={2.5} />
