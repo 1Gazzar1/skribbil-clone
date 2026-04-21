@@ -1,21 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import socket from "@/socket";
+import { useGame, type Player, type Room } from "@/contexts/GameContext";
 
 export default function LandingPage() {
   const [username, setUsername] = useState("");
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const navigate = useNavigate();
+  const { room, setRoom, setPlayers } = useGame()
 
+  useEffect(() => {
+    if (room?.id) {
+      navigate(`/lobby/${room.id}`);
+    }
+  }, [room?.id, navigate]);
+
+  useEffect( () => { 
+    socket.on("room.created", (data: { room : Room, players : Player[]}) => {
+      console.log("Room created", data);
+      setRoom(data.room)
+      setPlayers(data.players)
+    });
+    socket.on("room.updated", (data: { room : Room, players : Player[]}) => {
+      console.log("Room updated", data);
+      if (data.room){ 
+        setRoom(data.room)
+      }
+      if (data.players) { 
+        setPlayers(data.players)
+      }
+    });
+    return () => {
+      socket.off("room.created");
+      socket.off("room.updated");
+    };
+  },[])
+
+  function onRoomCreate() {
+    socket.emit("room.create", {
+      username,
+    });
+    
+  }
+  function onRoomJoin() { 
+    socket.emit("room.join", {
+      username,
+      roomId : roomCode,
+    });
+  }   
+    
   const handleHost = () => {
     if (!username || !avatarId) {
       alert("Please enter a username and select an avatar!");
       return;
     }
-    navigate("/lobby?mode=host");
+    onRoomCreate();
   };
 
   const handleJoin = () => {
@@ -23,9 +66,9 @@ export default function LandingPage() {
       alert("Please enter a username, avatar, and room code!");
       return;
     }
-    navigate(`/lobby?mode=join&code=${roomCode}`);
+    onRoomJoin();
   };
-
+  
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 rounded-3xl bg-white p-10 playful-shadow border border-blue-200">
@@ -76,7 +119,6 @@ export default function LandingPage() {
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
                 className="text-center uppercase text-xl font-bold bg-blue-50 border-2 border-blue-200 text-slate-800 rounded-xl h-14"
-                maxLength={6}
               />
               <Button
                 size="lg"

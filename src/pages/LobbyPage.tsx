@@ -1,26 +1,57 @@
-import { useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Users, Copy, Settings, Cat, Dog, Bird, Crown } from "lucide-react";
+import { useGame, type Player, type Room } from "@/contexts/GameContext";
+import socket from "@/socket";
 
-// Mock players for the UI
-const PLAYERS = [
-  { id: "1", name: "You", avatar: Cat, color: "bg-red-400", isHost: true },
-  { id: "2", name: "DoodleBob", avatar: Dog, color: "bg-blue-400", isHost: false },
-  { id: "3", name: "Picasso", avatar: Bird, color: "bg-green-400", isHost: false },
-];
+// Avatars and colors for fallback
+const AVATARS = [Cat, Dog, Bird];
+const COLORS = ["bg-red-400", "bg-blue-400", "bg-green-400", "bg-yellow-400", "bg-purple-400", "bg-pink-400", "bg-indigo-400", "bg-teal-400"];
 
 export default function LobbyPage() {
-  const [searchParams] = useSearchParams();
+  const { roomCode: paramRoomCode } = useParams();
   const navigate = useNavigate();
-  const mode = searchParams.get("mode") || "join";
-  const roomCode = searchParams.get("code") || "XYZ123";
-  const isHost = mode === "host";
 
-  const [rounds, setRounds] = useState("3");
-  const [drawTime, setDrawTime] = useState("80");
-  const [language, setLanguage] = useState("English");
+  const { players, room, id: playerId, setRoom, setPlayers } = useGame();
+  
+  const isHost = room ? playerId === room.hostId : false;
+  const roomCode = room?.id || paramRoomCode || "XYZ123";
 
+  const [rounds, setRounds] = useState(room?.noOfRounds || 3);
+  const [drawTime, setDrawTime] = useState(room?.turnDuration || 80);
+
+  useEffect(() => {
+    socket.on("room.updated", (data: { room : Room, players : Player[]}) => {
+      setRoom(data.room)
+      setPlayers(data.players)
+    });
+    return () => {
+      socket.off("room.updated");
+    };
+  },[])
+
+  useEffect(() => {
+    if (isHost){
+      onSettingsChange()
+    }
+  },[rounds,drawTime])
+
+  function onSettingsChange() {
+    const partialRoom : Partial<Room> = { 
+      noOfRounds: rounds,
+      turnDuration: drawTime,
+    }
+    console.log(room?.id)
+    console.log(partialRoom)
+    socket.emit("room.settings", {roomId: room?.id, room: partialRoom})
+  }
+  function onLeave(){ 
+    socket.emit("room.leave", { roomId : roomCode })
+    setRoom(null)
+    setPlayers([])
+    navigate("/")
+  }
   return (
     <div className="flex justify-center min-h-screen p-4 overflow-hidden text-slate-800">
       
@@ -45,27 +76,35 @@ export default function LobbyPage() {
             <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-blue-100">
               <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
                 <Users className="text-primary" size={28} />
-                Players <span className="text-slate-400 text-lg">({PLAYERS.length}/8)</span>
+                Players <span className="text-slate-400 text-lg">({players?.length || 0}/{room?.maxPlayers || 8})</span>
               </h2>
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-              {PLAYERS.map((player) => {
-                const Icon = player.avatar;
+              {players?.map((player, idx) => {
+                const Icon = AVATARS[idx % AVATARS.length];
+                const color = COLORS[idx % COLORS.length];
+                const isPlayerHost = room?.hostId === player.id;
+                
                 return (
                   <div key={player.id} className="flex items-center justify-between bg-blue-50 p-3 rounded-2xl border border-blue-100 transition-transform hover:-translate-y-1 hover:shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 flex items-center justify-center rounded-xl bg-white border-2 border-transparent ${player.color} bg-opacity-20`}>
-                        <Icon size={28} className={player.color.replace('bg-', 'text-')} strokeWidth={2.5} />
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-xl bg-white border-2 border-transparent ${color} bg-opacity-20`}>
+                        <Icon size={28} className={color.replace('bg-', 'text-')} strokeWidth={2.5} />
                       </div>
-                      <span className="text-xl font-bold text-slate-700">{player.name}</span>
+                      <span className="text-xl font-bold text-slate-700">{player.username} {playerId === player.id ? "(You)" : ""}</span>
                     </div>
-                    {player.isHost && (
+                    {isPlayerHost && (
                       <Crown className="text-amber-400 fill-amber-400" size={24} />
                     )}
                   </div>
                 );
               })}
+              {(!players || players.length === 0) && (
+                <div className="text-center p-4 text-slate-500 font-semibold">
+                  Waiting for players to join...
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -84,8 +123,8 @@ export default function LobbyPage() {
                 <label className="font-bold text-slate-600 text-sm uppercase">Rounds</label>
                 <select 
                   className="w-full bg-blue-50 text-slate-800 border-2 border-blue-200 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
-                  value={rounds}
-                  onChange={(e) => setRounds(e.target.value)}
+                  value={room?.noOfRounds}
+                  onChange={(e) => {setRounds(+e.target.value);}}
                   disabled={!isHost}
                 >
                   <option value="1">1</option>
@@ -100,8 +139,8 @@ export default function LobbyPage() {
                 <label className="font-bold text-slate-600 text-sm uppercase">Draw Time (seconds)</label>
                 <select 
                   className="w-full bg-blue-50 text-slate-800 border-2 border-blue-200 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
-                  value={drawTime}
-                  onChange={(e) => setDrawTime(e.target.value)}
+                  value={room?.turnDuration}
+                  onChange={(e) => {setDrawTime(+e.target.value);}}
                   disabled={!isHost}
                 >
                   <option value="30">30</option>
@@ -112,19 +151,6 @@ export default function LobbyPage() {
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="font-bold text-slate-600 text-sm uppercase">Language</label>
-                <select 
-                  className="w-full bg-blue-50 text-slate-800 border-2 border-blue-200 rounded-xl px-4 py-3 font-bold text-lg disabled:opacity-50 focus:border-primary focus:ring-0 appearance-none"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  disabled={!isHost}
-                >
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="French">French</option>
-                </select>
-              </div>
             </div>
 
             <div className="pt-6 mt-4 border-t-2 border-blue-100">
@@ -138,7 +164,7 @@ export default function LobbyPage() {
                 </div>
               )}
               <div className="mt-4 text-center">
-                <Link to="/" className="text-slate-400 font-bold hover:text-red-500 transition-colors uppercase text-sm tracking-wider">
+                <Link to="/" onClick={onLeave} className="text-slate-400 font-bold hover:text-red-500 transition-colors uppercase text-sm tracking-wider">
                   Leave Room
                 </Link>
               </div>

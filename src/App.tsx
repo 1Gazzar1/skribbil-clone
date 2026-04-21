@@ -10,7 +10,7 @@ function App() {
       <DoodleBackground />
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/lobby" element={<LobbyPage />} />
+        <Route path="/lobby/:roomCode" element={<LobbyPage />} />
         <Route path="/game" element={<GamePage />} />
       </Routes>
     </BrowserRouter>
