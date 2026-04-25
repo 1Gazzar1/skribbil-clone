@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { PlayerList } from "@/components/PlayerList";
 import { GameCanvas } from "@/components/GameCanvas";
 import { ChatPanel } from "@/components/ChatPanel";
 import { TurnEndOverlay } from "@/components/TurnEndOverlay";
+import { GameOverOverlay } from "@/components/GameOverOverlay";
 import socket from "@/socket";
 import { useGame, type Player, type Room } from "@/contexts/GameContext";
 import * as z from "zod"
@@ -136,6 +138,7 @@ export function GameHeader({ gameState }: { gameState: GameState }) {
 }
 export type Message = {username: string, message: string, playerId: string, type: "CORRECT" | "CLOSE" | "NORMAL_GUESS" | "CHAT_AFTER_GUESS"};
 export default function GamePage() {
+  const navigate = useNavigate();
   const {setRoom, players,setPlayers,setCorrectWordLength, correctWordLength,  room, initialState} = useGame()
   const [gameState, setGameState] = useState<GameState>(initialState ?? {state : "waiting", startTimer: true} );
   const [chat,setChat] = useState<Message[]>([])
@@ -219,6 +222,12 @@ export default function GamePage() {
         wordLength: correctWordLength, 
         canvasEvent: data, 
         startTimer: false,
+      })
+    })
+    socket.on("game.game_over", (data: {players: Player[]}) => { 
+      setPlayers(data.players)
+      setGameState({
+        state: "game_over",
       })
     })
     return () => { 
@@ -316,6 +325,14 @@ export default function GamePage() {
           newPlayers={gameState.newPlayers}
           oldPlayers={gameState.oldPlayers}
           onComplete={handleTurnEndComplete}
+        />
+      )}
+
+      {/* ── Game Over overlay ── */}
+      {gameState.state === "game_over" && (
+        <GameOverOverlay
+          players={players}
+          onBackToHome={() => navigate("/")}
         />
       )}
     </div>
