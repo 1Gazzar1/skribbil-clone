@@ -75,7 +75,7 @@ export default function LandingPage() {
         <div className="text-center space-y-2">
           <h1 className="text-5xl font-black text-primary tracking-tight mb-4 flex flex-col items-center">
             <span>Skribbil</span>
-            <span className="text-white bg-black px-3 py-1 rounded-xl -rotate-3 inline-block mt-1 text-4xl">
+            <span className="text-white bg-black/80 px-3 py-1 rounded-xl -rotate-3 inline-block mt-1 text-4xl">
               .clone
             </span>
           </h1>

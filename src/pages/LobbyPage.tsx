@@ -41,6 +41,7 @@ export default function LobbyPage() {
         state: "choosing", 
         words: data.words, 
         chooseHandler: onChooseWord, 
+        startTimer: true,
       })
       navigate(`/game/${room?.id ?? ""}`)
     })
@@ -82,10 +83,10 @@ export default function LobbyPage() {
     socket.emit("game.choose_word", { roomId : room?.id,word })
   }
   return (
-    <div className="relative flex justify-center min-h-screen p-4 overflow-hidden text-slate-800 pointer-events-none z-20">
+    <div className="relative flex justify-center min-h-screen p-4 overflow-y-auto overflow-x-hidden text-slate-800 pointer-events-none z-20">
       
       {/* Container */}
-      <div className="w-full max-w-5xl flex gap-8 my-auto max-h-[90vh] flex-col md:flex-row pointer-events-auto">
+      <div className="w-full max-w-5xl flex gap-8 my-8 md:my-auto md:max-h-[90vh] flex-col md:flex-row pointer-events-auto">
         
         {/* Left column: Players & Room Code */}
         <div className="flex flex-col gap-8 md:w-2/3">
@@ -94,14 +95,18 @@ export default function LobbyPage() {
             <h2 className="text-xl font-bold mb-3 text-slate-500 uppercase tracking-widest">Room Code</h2>
             <div className="flex items-center gap-4 bg-zinc-100 py-3 px-6 rounded-2xl border-2 border-zinc-300">
               <span className="text-5xl font-black tracking-widest text-primary">{roomCode}</span>
-              <button className="playful-hover p-2 bg-white rounded-xl border-2 border-zinc-300 text-slate-500 hover:text-primary transition-colors">
+              <button 
+                className="playful-hover w-fit  p-2 bg-white rounded-xl border-2 border-zinc-300 text-slate-500 hover:text-primary transition-colors"
+                onClick={() => navigator.clipboard.writeText(roomCode)}
+                title="Copy Room Code"
+              >
                 <Copy size={24} />
               </button>
             </div>
             <p className="mt-4 text-slate-500 font-semibold">Share this code with your friends!</p>
           </div>
 
-          <div className="flex-1 p-6 bg-white rounded-3xl border-4 border-black playful-shadow overflow-hidden flex flex-col">
+          <div className="flex-1 p-6 bg-white rounded-3xl border-4 border-black playful-shadow overflow-hidden flex flex-col min-h-[350px] md:min-h-0">
             <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-zinc-200">
               <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
                 <Users className="text-primary" size={28} />

@@ -3,16 +3,13 @@ import { PenTool, PaintBucket, Eraser, Trash2, Undo } from "lucide-react";
 import type { Canvas, GameState } from "../pages/GamePage";
 
 const COLORS = [
-  "#000000", "#ef4444", "#3b82f6", "#22c55e",
-  "#eab308", "#a855f7", "#ec4899", "#f97316",
-  "#ffffff", "#fca5a5", "#93c5fd", "#86efac",
-  "#fef08a", "#d8b4fe", "#fbcfe8", "#fdba74"
+  "#000000", "#ffffff", "#ef4444", "#3b82f6",
+  "#22c55e", "#eab308", "#a855f7", "#ec4899", "#f97316"
 ];
 
-// 8 primary swatches shown in the compact mobile toolbar
+// 5 primary swatches shown in the compact mobile toolbar
 const MOBILE_COLORS = [
-  "#000000", "#ef4444", "#3b82f6", "#22c55e",
-  "#eab308", "#a855f7", "#ffffff", "#f97316",
+  "#000000", "#ffffff", "#ef4444", "#3b82f6", "#22c55e"
 ];
 
 const BRUSH_SIZES = [
@@ -78,6 +75,12 @@ export function GameCanvas({
     const canvas = ctx.canvas;
     const W = canvas.width;
     const H = canvas.height;
+    
+    if (W === 0 || H === 0) return;
+
+    startX = Math.max(0, Math.min(Math.round(startX), W - 1));
+    startY = Math.max(0, Math.min(Math.round(startY), H - 1));
+
     const imgData = ctx.getImageData(0, 0, W, H);
     const data = imgData.data;
 
@@ -164,7 +167,7 @@ export function GameCanvas({
   const redrawCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || canvas.width === 0 || canvas.height === 0) return;
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -215,25 +218,20 @@ export function GameCanvas({
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    redrawCanvas();
-
-    const handleResize = () => {
+    const resizeObserver = new ResizeObserver(() => {
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
       redrawCanvas();
-    };
+    });
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -260,8 +258,8 @@ export function GameCanvas({
       x = (e as React.MouseEvent).clientX - rect.left;
       y = (e as React.MouseEvent).clientY - rect.top;
     }
-    const fX = +String(x / canvas.width).slice(0,5)
-    const fY = +String(y / canvas.height).slice(0,5)
+    const fX = +String(x / rect.width).slice(0,5)
+    const fY = +String(y / rect.height).slice(0,5)
     return { x: fX, y: fY };
   };
 
@@ -392,26 +390,6 @@ export function GameCanvas({
   return (
     <div className="flex flex-col h-full max-h-full">
 
-      {/* ── Desktop header: Word / Hint (hidden on mobile — GamePage renders its own) ── */}
-      {showHeader && (
-        <div className="hidden md:flex justify-between items-center bg-white rounded-3xl border border-blue-200 playful-shadow p-4 mb-4 gap-2">
-          <div className="text-primary font-bold text-2xl tracking-wider bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 shrink-0">
-            01:24
-          </div>
-          <div className="flex-1 text-center group min-w-0">
-            <h2 className={`text-4xl font-black text-slate-800 tracking-[0.4em] transition-transform duration-500 truncate ${gameState?.state === "guessing" ? "blur-[2px] hover:blur-none" : ""}`}>
-              {gameState?.state === "choosing" ? "WAITING..." : "_ _ A _ _ E"}
-            </h2>
-            <p className="text-slate-500 font-bold mt-1 text-sm tracking-widest uppercase">
-              {gameState?.state === "choosing" ? "Choosing a word" : "6 letters"}
-            </p>
-          </div>
-          <div className="text-slate-500 font-bold text-xl bg-blue-50 px-6 py-2 rounded-2xl border-2 border-blue-200 shrink-0">
-            Round 1/3
-          </div>
-        </div>
-      )}
-
       {/* ── Canvas Area ── */}
       <div
         ref={containerRef}
@@ -430,9 +408,7 @@ export function GameCanvas({
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className={`absolute inset-0 w-full h-full block touch-none ${
-            isActiveDrawer ? "cursor-crosshair" : "cursor-default pointer-events-none"
-          }`}
+          className={`absolute inset-0 w-full h-full block touch-none`}
         />
 
         {/* Overlay for "Choosing" State */}
@@ -560,8 +536,8 @@ export function GameCanvas({
       </div>
 
       {/* ── DESKTOP toolbar (hidden on compact/mobile) ── */}
-      {!compact && (
-        <div className="bg-white rounded-3xl border border-blue-200 playful-shadow p-3 mt-4 flex flex-wrap items-center gap-4 transition-opacity duration-300 opacity-90">
+      {!compact && isActiveDrawer && (
+        <div className="bg-white rounded-3xl border border-blue-200 playful-shadow p-3 mt-4 flex flex-wrap items-center gap-4 transition-opacity duration-300 opacity-100">
 
           {/* Tools */}
           <div className="flex gap-2 bg-blue-50 p-2 rounded-2xl border border-blue-200">
@@ -591,8 +567,8 @@ export function GameCanvas({
             </button>
           </div>
 
-          {/* Colors — full 16 palette */}
-          <div className="flex-1 flex flex-wrap gap-2 justify-center bg-blue-50 p-3 rounded-2xl border border-blue-200">
+          {/* Colors — 9 palette + custom */}
+          <div className="flex-1 flex flex-wrap gap-2 justify-center bg-blue-50 p-3 rounded-2xl border border-blue-200 items-center">
             {COLORS.map((c) => (
               <button
                 key={c}
@@ -603,6 +579,21 @@ export function GameCanvas({
                 style={{ backgroundColor: c }}
               />
             ))}
+
+            <div className="w-px h-8 bg-blue-200 mx-1" />
+
+            <label
+              className="w-8 h-8 rounded-full border-2 border-zinc-800 overflow-hidden cursor-pointer shadow-sm transition-transform hover:scale-110 shrink-0"
+              style={{ backgroundColor: color }}
+              title="Custom color"
+            >
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="opacity-0 w-0 h-0 absolute"
+              />
+            </label>
           </div>
 
           {/* Brush sizes + actions */}

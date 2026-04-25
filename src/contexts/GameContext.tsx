@@ -38,8 +38,8 @@ export type RoomState = z.infer<typeof roomStateSchema>;
 interface GameContextType {
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
-  room: Room | null;
-  setRoom: React.Dispatch<React.SetStateAction<Room | null>>;
+  room: Room | Omit<Room, "wordOptions"> | null;
+  setRoom: React.Dispatch<React.SetStateAction<Room | Omit<Room, "wordOptions"> | null>>;
   id: string | null;
   initialState: GameState | null; 
   setInitialState: React.Dispatch<React.SetStateAction<GameState | null>>;
@@ -51,7 +51,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [players, setPlayers] = useState<Player[]>([]);
-  const [room, setRoom] = useState<Room | null>(null);
+  const [room, setRoom] = useState<Room|Omit<Room,"wordOptions"> | null>(null);
   const [id,setId] = useState<string | null>(null); 
   const [initialState,setInitialState] = useState<GameState | null>(null)
   const [cwl,setCwl] = useState<number | null > (null)
