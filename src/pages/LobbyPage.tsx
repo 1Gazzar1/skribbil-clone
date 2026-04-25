@@ -13,7 +13,7 @@ export default function LobbyPage() {
   const { roomCode: paramRoomCode } = useParams();
   const navigate = useNavigate();
 
-  const { players, room, id: playerId, setRoom, setPlayers } = useGame();
+  const { players, room, id: playerId, setRoom, setPlayers, setInitialState } = useGame();
   
   const isHost = room ? playerId === room.hostId : false;
   const roomCode = room?.id || paramRoomCode || "XYZ123";
@@ -26,15 +26,33 @@ export default function LobbyPage() {
       setRoom(data.room)
       setPlayers(data.players)
     });
+      socket.on("game.turn_start", (data : {room:Room}) => { 
+        // if you're not the host 
+        // go the game immediatly 
+        if (!isHost) { 
+          navigate(`/game/${room?.id ?? ""}`)
+        }
+      setRoom(data.room)
+    })
+    // only the host will wait for this event 
+    // it ideally comes after 2ms or something
+    socket.on("game.words", (data : {words : string[]}) => { 
+      setInitialState( { 
+        state: "choosing", 
+        words: data.words, 
+        chooseHandler: onChooseWord, 
+      })
+      navigate(`/game/${room?.id ?? ""}`)
+    })
     return () => {
       socket.off("room.updated");
+      socket.off("game.turn_start");
+      socket.off("game.words");
     };
   },[])
 
   useEffect(() => {
-    if (isHost){
       onSettingsChange()
-    }
   },[rounds,drawTime])
 
   function onSettingsChange() {
@@ -44,13 +62,24 @@ export default function LobbyPage() {
     }
     console.log(room?.id)
     console.log(partialRoom)
-    socket.emit("room.settings", {roomId: room?.id, room: partialRoom})
+    if (isHost){
+      socket.emit("room.settings", {roomId: room?.id, room: partialRoom})
+    }
   }
   function onLeave(){ 
     socket.emit("room.leave", { roomId : roomCode })
     setRoom(null)
     setPlayers([])
     navigate("/")
+  }
+  function onGameStart() {
+    if (isHost) { 
+      socket.emit("game.turn_start", {roomId: room?.id})
+      
+    }
+  }
+  function onChooseWord(word: string) {
+    socket.emit("game.choose_word", { roomId : room?.id,word })
   }
   return (
     <div className="relative flex justify-center min-h-screen p-4 overflow-hidden text-slate-800 pointer-events-none z-20">
@@ -143,6 +172,7 @@ export default function LobbyPage() {
                   onChange={(e) => {setDrawTime(+e.target.value);}}
                   disabled={!isHost}
                 >
+                  <option value="10">10</option>
                   <option value="30">30</option>
                   <option value="60">60</option>
                   <option value="80">80</option>
@@ -155,7 +185,7 @@ export default function LobbyPage() {
 
             <div className="pt-6 mt-4 border-t-2 border-zinc-200">
               {isHost ? (
-                <Button className="w-full text-xl font-bold h-16 bg-primary text-white hover:bg-pink-600 rounded-xl playful-hover shadow-sm" onClick={() => navigate("/game")}>
+                <Button  className="w-full text-xl font-bold h-16 bg-primary text-white hover:bg-pink-600 rounded-xl playful-hover shadow-sm" onClick={onGameStart}>
                   Start Game
                 </Button>
               ) : (
