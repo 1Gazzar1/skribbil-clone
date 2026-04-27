@@ -43,12 +43,14 @@ export default function LandingPage() {
   function onRoomCreate() {
     socket.emit("room.create", {
       username,
+      avatarId,
     });
     
   }
   function onRoomJoin() { 
     socket.emit("room.join", {
       username,
+      avatarId,
       roomId : roomCode,
     });
   }   
@@ -96,11 +98,11 @@ export default function LandingPage() {
             />
           </div>
 
-          <AvatarSelector selectedId={avatarId} onSelect={setAvatarId} />
+          <AvatarSelector onSelect={setAvatarId} />
 
           <div className="pt-4 space-y-4 border-t-2 border-zinc-200">
             <Button
-              className="w-full text-xl font-bold h-14 bg-primary text-white hover:bg-pink-600 rounded-xl playful-hover shadow-sm"
+              className="w-full text-xl font-bold h-14 bg-primary text-white hover:bg-primary/90 rounded-xl playful-hover shadow-sm"
               size="lg"
               onClick={handleHost}
             >

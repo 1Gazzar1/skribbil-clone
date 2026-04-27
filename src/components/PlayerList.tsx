@@ -1,5 +1,5 @@
 import { useGame, type Player } from "@/contexts/GameContext";
-import { Cat, Dog, Bird, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 
 export function PlayerList({ compact, players }: { compact?: boolean, players:Player[] }) {
@@ -25,9 +25,9 @@ export function PlayerList({ compact, players }: { compact?: boolean, players:Pl
               <span className="text-[10px] font-black text-slate-400">#{index + 1}</span>
               <span className="text-[10px] font-bold text-slate-600 max-w-[52px] truncate">{player.username} {id === player.id ? "(You)" : ""}</span>
               <span className="text-[10px] font-semibold text-slate-400">{player.score}</span>
-              {/* <div className={`w-10 h-10 flex items-center justify-center rounded-xl ${player.color} bg-opacity-20`}>
-                <Icon size={20} className={player.color.replace("bg-", "text-")} strokeWidth={2.5} />
-              </div> */}
+              <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border-2 border-slate-200 overflow-hidden shrink-0 mt-1">
+                <img src={player.avatarId} alt="avatar" className="w-full h-full object-contain drop-shadow-sm" />
+              </div>
               {room?.drawingPlayerId === player.id && (
                 <div className="absolute -right-1 -top-1 bg-primary border-2 border-white rounded-full p-0.5">
                   <Pencil size={10} className="text-white" strokeWidth={3} />
@@ -64,9 +64,9 @@ export function PlayerList({ compact, players }: { compact?: boolean, players:Pl
               </div>
 
               {/* Avatar */}
-              {/* <div className={`w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-lg md:rounded-xl ${player.color} bg-opacity-20 md:ml-2 shrink-0`}>
-                <Icon size={16} className={player.color.replace("bg-", "text-")} strokeWidth={2.5} />
-              </div> */}
+              <div className="w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-lg md:rounded-xl bg-white border-2 border-slate-200 md:ml-2 shrink-0 overflow-hidden">
+                <img src={player.avatarId} alt="avatar" className="w-full h-full object-contain drop-shadow-sm" />
+              </div>
 
               {/* Name + score */}
               <div className="flex-1 min-w-0 md:ml-4">

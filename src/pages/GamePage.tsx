@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlayerList } from "@/components/PlayerList";
 import { GameCanvas } from "@/components/GameCanvas";
@@ -272,14 +272,12 @@ export default function GamePage() {
     socket.emit("game.choose_word", { roomId : room?.id,word })
   }
   function onGuessWord(guess : string) { 
-    socket.emit("game.guess", { roomId: room?.id,  guess})
+    socket.emit("game.guess", { roomId: room?.id,  guess : guess.toLocaleLowerCase().trim()})
   }
   // only the drawer emits this event  
   function onDraw(canvas: Canvas) { 
     socket.emit("canvas.draw", {roomId : room?.id, canvas})
   }
-
-  const isDrawing = gameState?.state === "drawing";
 
   function handleTurnEndComplete() {
     // The overlay dismisses itself after 5 s; the server will have already

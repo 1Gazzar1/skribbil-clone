@@ -17,6 +17,7 @@ export const playerSchema = z.object({
     joinedAt: z.number(), // Date.now
     playedThisRound: z.boolean(),
     scoreGainedThisTurn: z.number(),
+    avatarId: z.string(), 
 });
 
 export const roomSchema = z.object({

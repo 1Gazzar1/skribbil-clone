@@ -1,5 +1,5 @@
 import { type Player } from "@/contexts/GameContext";
-import { Trophy, Home, Users } from "lucide-react";
+import { Trophy, Home } from "lucide-react";
 
 interface GameOverOverlayProps {
   players: Player[];

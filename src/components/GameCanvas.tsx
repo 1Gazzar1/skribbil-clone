@@ -7,11 +7,6 @@ const COLORS = [
   "#22c55e", "#eab308", "#a855f7", "#ec4899", "#f97316"
 ];
 
-// 5 primary swatches shown in the compact mobile toolbar
-const MOBILE_COLORS = [
-  "#000000", "#ffffff", "#ef4444", "#3b82f6", "#22c55e"
-];
-
 const BRUSH_SIZES = [
   { size: 4, iconSize: 10 },
   { size: 8, iconSize: 14 },
@@ -21,12 +16,10 @@ const BRUSH_SIZES = [
 
 export function GameCanvas({
   gameState,
-  compact,
-  showHeader = true,
+  compact
 }: {
   gameState?: GameState;
   compact?: boolean;
-  showHeader?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -565,45 +558,59 @@ export function GameCanvas({
               <Eraser size={24} strokeWidth={2.5} />
             </button>
           </div>
+          {/* Colors — palette + custom */}
+          <div className="flex-1 min-w-[120px] bg-blue-50 p-2 sm:p-3 rounded-2xl border border-blue-200">
 
-          {/* Colors — 9 palette + custom */}
-          <div className="flex-1 flex flex-wrap gap-2 justify-center bg-blue-50 p-3 rounded-2xl border border-blue-200 items-center">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                className={`w-8 h-8 rounded-full border-2 border-zinc-800 shadow-sm transition-transform ${
-                  color === c ? "ring-4 ring-primary/40 ring-offset-2 scale-125 z-10" : "hover:scale-110"
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
+            <div className="flex items-center gap-2">
 
-            <div className="w-px h-8 bg-blue-200 mx-1" />
+              {/* Palette */}
+              <div className="grid grid-cols-[repeat(auto-fit,32px)] gap-2 justify-center flex-1">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className={`w-8 h-8 rounded-full border-2 border-zinc-800 shadow-sm transition-all ${
+                      color === c
+                        ? "ring-2 sm:ring-4 ring-primary/40 ring-offset-1 sm:ring-offset-2 z-10"
+                        : "hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
 
-            <label
-              className="w-8 h-8 rounded-full border-2 border-zinc-800 overflow-hidden cursor-pointer shadow-sm transition-transform hover:scale-110 shrink-0"
-              style={{ backgroundColor: color }}
-              title="Custom color"
-            >
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="opacity-0 w-0 h-0 absolute"
-              />
-            </label>
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-8 bg-blue-200" />
+
+              {/* Custom color */}
+              <label
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-zinc-800 overflow-hidden cursor-pointer shadow-sm transition-transform hover:scale-110 shrink-0"
+                style={{ backgroundColor: color }}
+              >
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="opacity-0 w-0 h-0 absolute"
+                />
+              </label>
+
+            </div>
           </div>
+            
 
           {/* Brush sizes + actions */}
           <div className="flex gap-4 items-center border-l-2 border-blue-200 pl-4">
-            <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-2xl border border-blue-200">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-blue-50 p-2 rounded-2xl border border-blue-200">
               {BRUSH_SIZES.map((b) => (
                 <button
                   key={b.size}
                   onClick={() => setBrushSize(b.size)}
-                  className={`flex items-center justify-center p-2 rounded-xl transition-all w-10 h-10 ${
-                    brushSize === b.size ? "bg-slate-200 scale-110" : "hover:bg-slate-200 bg-transparent"
+                  className={`flex items-center justify-center rounded-xl transition-all 
+                    w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ${
+                    brushSize === b.size
+                      ? "bg-slate-200 scale-105 sm:scale-110"
+                      : "hover:bg-slate-200"
                   }`}
                 >
                   <div
@@ -619,17 +626,16 @@ export function GameCanvas({
               <button
                 onClick={undo}
                 disabled={actionsCount <= 0}
-                className="p-3 bg-blue-50 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-xl border border-blue-200 transition-all text-slate-400 hover:text-slate-700 shadow-sm"
-                title="Undo"
+                className="p-2 sm:p-3 bg-blue-50 hover:bg-slate-200 disabled:opacity-30 rounded-xl border border-blue-200 transition-all text-slate-400 hover:text-slate-700"
               >
-                <Undo size={24} strokeWidth={2.5} />
+                <Undo size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
               </button>
+
               <button
                 onClick={clearCanvas}
-                className="p-3 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition-all text-red-500 hover:text-red-700 shadow-sm"
-                title="Clear Canvas"
+                className="p-2 sm:p-3 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition-all text-red-500 hover:text-red-700"
               >
-                <Trash2 size={24} strokeWidth={2.5} />
+                <Trash2 size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
               </button>
             </div>
           </div>

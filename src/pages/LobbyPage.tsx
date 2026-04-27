@@ -24,6 +24,7 @@ export default function LobbyPage() {
       socket.emit("room.join",{
         username: "no name ;)",
         roomId: paramRoomCode,
+        avatarId: "cassette.svg"
       })
     } 
   }, [])
@@ -121,12 +122,15 @@ export default function LobbyPage() {
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-              {players?.map((player, idx) => {
+              {players?.map((player) => {
                 const isPlayerHost = room?.hostId === player.id;
                 
                 return (
                   <div key={player.id} className="flex items-center justify-between bg-zinc-100 p-3 rounded-2xl border border-zinc-300 transition-transform hover:-translate-y-1 hover:shadow-sm">
                     <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-white shrink-0 overflow-hidden">
+                        <img src={player.avatarId} alt="avatar" className="w-full h-full object-contain drop-shadow-sm" />
+                      </div>
                       <span className="text-xl font-bold text-slate-700">{player.username} {playerId === player.id ? "(You)" : ""}</span>
                     </div>
                     {isPlayerHost && (
