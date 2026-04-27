@@ -1,7 +1,9 @@
 import type { GameState } from '@/pages/GamePage';
 import socket from '@/socket';
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { toast } from "sonner"
 
 // Assuming roomStateSchema is an enum for the different states a room can be in.
 // If you have a different definition for this, you can replace it!
@@ -55,13 +57,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [id,setId] = useState<string | null>(null); 
   const [initialState,setInitialState] = useState<GameState | null>(null)
   const [cwl,setCwl] = useState<number | null > (null)
-  
+  const navigate = useNavigate()
   useEffect(() => {
     socket.onAny((event, data) => { 
       console.log(event, data);
     })
     socket.on("connected", (data : {playerId : string}) => { 
-      console.log("Connected",data.playerId)
+      // console.log("Connected",data.playerId)
       setId(data.playerId)
     })
     socket.on("connect", () => {
@@ -70,11 +72,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on("disconnect", () => {
       console.log("Disconnected from server");
     });
+    socket.on("player.left", (data : {username : string}) => { 
+      toast.error(`${data.username} left the game`,{position: "top-right"})
+    })
+    socket.on("game.return_to_lobby", () => { 
+      handleLeave()
+    })
+    
+    const handleLeave = () => {
+      setPlayers([]);
+      setRoom(null);
+      setInitialState(null);
+      setCwl(null);
+      socket.disconnect(); // to fire a "disconnecting" event.
+      navigate("/")
+      socket.connect() // to generate a new socket.id      
+    }
+    window.addEventListener("beforeunload",handleLeave);
+    window.addEventListener("popstate",handleLeave); // if the user goes back in the page while in the lobby or during the game
     return () => {
       socket.offAny();
+      socket.off("player.left"); 
+      socket.off("game.return_to_lobby");
       socket.off("connected");
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("leave");
+      window.removeEventListener("beforeunload",handleLeave);
+      window.removeEventListener("popstate",handleLeave);
     }
   },[])
   return (

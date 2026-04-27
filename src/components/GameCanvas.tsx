@@ -258,8 +258,8 @@ export function GameCanvas({
       x = (e as React.MouseEvent).clientX - rect.left;
       y = (e as React.MouseEvent).clientY - rect.top;
     }
-    const fX = +String(x / rect.width).slice(0,5)
-    const fY = +String(y / rect.height).slice(0,5)
+    const fX = +String(x / rect.width).slice(0,10)
+    const fY = +String(y / rect.height).slice(0,10)
     return { x: fX, y: fY };
   };
 
@@ -395,7 +395,7 @@ export function GameCanvas({
         ref={containerRef}
         className={`relative bg-white overflow-hidden ${
           compact
-            ? "flex-1 min-h-0 rounded-sm"
+            ? "flex-1 min-h-0 rounded-sm border-b-2 border-blue-100"
             : "flex-1 min-h-[400px] rounded-3xl border border-blue-200 playful-shadow"
         }`}
       >
@@ -431,56 +431,76 @@ export function GameCanvas({
             </div>
           </div>
         )}
+      </div>
 
-        {/* ── MOBILE floating toolbar (compact + drawing only) ── */}
-        {compact && isActiveDrawer && (
-          <div className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t-2 border-blue-100 px-2 py-1.5 flex items-center gap-2">
+      {/* ── MOBILE toolbar (compact + drawing only) ── */}
+      {compact && isActiveDrawer && (
+        <div className="shrink-0 bg-white p-2.5 flex flex-wrap items-center justify-center gap-2.5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+          {/* Tool selector */}
+          <div className="flex gap-1 bg-blue-50 p-1 rounded-xl border border-blue-200 shrink-0">
+            <button
+              onClick={() => setTool("pen")}
+              className={`p-2 rounded-lg transition-all ${
+                tool === "pen" ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"
+              }`}
+            >
+              <PenTool size={18} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => setTool("bucket")}
+              className={`p-2 rounded-lg transition-all ${
+                tool === "bucket" ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"
+              }`}
+            >
+              <PaintBucket size={18} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => setTool("eraser")}
+              className={`p-2 rounded-lg transition-all ${
+                tool === "eraser" ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"
+              }`}
+            >
+              <Eraser size={18} strokeWidth={2.5} />
+            </button>
+          </div>
 
-            {/* Tool selector */}
-            <div className="flex gap-1 bg-blue-50 p-1 rounded-xl border border-blue-200 shrink-0">
+          {/* Brush sizes */}
+          <div className="flex gap-1 bg-blue-50 px-1.5 py-1 rounded-xl border border-blue-200 shrink-0">
+            {BRUSH_SIZES.map((b) => (
               <button
-                onClick={() => setTool("pen")}
-                className={`p-1.5 rounded-lg transition-all ${
-                  tool === "pen" ? "bg-primary text-white" : "text-slate-500"
+                key={b.size}
+                onClick={() => setBrushSize(b.size)}
+                className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
+                  brushSize === b.size ? "bg-slate-200 shadow-sm scale-110" : "hover:bg-slate-200"
                 }`}
               >
-                <PenTool size={16} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={() => setTool("bucket")}
-                className={`p-1.5 rounded-lg transition-all ${
-                  tool === "bucket" ? "bg-primary text-white" : "text-slate-500"
-                }`}
-              >
-                <PaintBucket size={16} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={() => setTool("eraser")}
-                className={`p-1.5 rounded-lg transition-all ${
-                  tool === "eraser" ? "bg-primary text-white" : "text-slate-500"
-                }`}
-              >
-                <Eraser size={16} strokeWidth={2.5} />
-              </button>
-            </div>
-
-            {/* 8 color swatches */}
-            <div className="flex gap-1 flex-1 justify-center">
-              {MOBILE_COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`w-6 h-6 rounded-full border-2 border-zinc-700 shadow-sm transition-transform shrink-0 ${
-                    color === c ? "ring-2 ring-primary ring-offset-1 scale-125 z-10" : ""
+                <div
+                  className={`rounded-full ${
+                    brushSize === b.size ? "bg-zinc-600" : "bg-zinc-400"
                   }`}
-                  style={{ backgroundColor: c }}
+                  style={{ width: b.iconSize * 0.7, height: b.iconSize * 0.7 }}
                 />
-              ))}
-            </div>
+              </button>
+            ))}
+          </div>
 
-            {/* Native color picker for any color */}
+          {/* Color swatches */}
+          <div className="flex gap-1.5 flex-wrap justify-center shrink-0 bg-blue-50 p-1.5 rounded-xl border border-blue-200">
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`w-7 h-7 rounded-full border-2 border-zinc-700 shadow-sm transition-transform shrink-0 ${
+                  color === c ? "ring-2 ring-primary ring-offset-1 scale-125 z-10" : "hover:scale-110"
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+            
+            <div className="w-px h-7 bg-blue-200 mx-0.5" />
+
             <label
-              className="w-7 h-7 rounded-full border-2 border-zinc-700 overflow-hidden cursor-pointer shrink-0 shadow-sm"
+              className="w-7 h-7 rounded-full border-2 border-zinc-700 overflow-hidden cursor-pointer shrink-0 shadow-sm transition-transform hover:scale-110"
               style={{ backgroundColor: color }}
               title="Custom color"
             >
@@ -491,49 +511,28 @@ export function GameCanvas({
                 className="opacity-0 w-0 h-0 absolute"
               />
             </label>
-
-            {/* Brush size — tiny dots */}
-            <div className="flex gap-0.5 bg-blue-50 px-1.5 py-1 rounded-xl border border-blue-200 shrink-0">
-              {BRUSH_SIZES.map((b) => (
-                <button
-                  key={b.size}
-                  onClick={() => setBrushSize(b.size)}
-                  className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all ${
-                    brushSize === b.size ? "bg-slate-200" : ""
-                  }`}
-                >
-                  <div
-                    className={`rounded-full ${
-                      brushSize === b.size ? "bg-zinc-600" : "bg-zinc-400"
-                    }`}
-                    style={{ width: b.iconSize * 0.6, height: b.iconSize * 0.6 }}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Undo + Clear */}
-            <div className="flex gap-1 shrink-0">
-              <button
-                onClick={undo}
-                disabled={actionsCount <= 0}
-                className="p-1.5 bg-blue-50 disabled:opacity-30 rounded-lg border border-blue-200 text-slate-400"
-                title="Undo"
-              >
-                <Undo size={15} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={clearCanvas}
-                className="p-1.5 bg-red-50 rounded-lg border border-red-200 text-red-500"
-                title="Clear"
-              >
-                <Trash2 size={15} strokeWidth={2.5} />
-              </button>
-            </div>
-
           </div>
-        )}
-      </div>
+
+          {/* Undo + Clear */}
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={undo}
+              disabled={actionsCount <= 0}
+              className="p-2 bg-blue-50 disabled:opacity-30 rounded-xl border border-blue-200 text-slate-500 hover:bg-slate-200 transition-colors"
+              title="Undo"
+            >
+              <Undo size={18} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={clearCanvas}
+              className="p-2 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 text-red-500 transition-colors"
+              title="Clear"
+            >
+              <Trash2 size={18} strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── DESKTOP toolbar (hidden on compact/mobile) ── */}
       {!compact && isActiveDrawer && (

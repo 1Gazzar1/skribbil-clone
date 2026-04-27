@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Users, Copy, Settings, Cat, Dog, Bird, Crown } from "lucide-react";
+import { Users, Copy, Settings, Crown } from "lucide-react";
 import { useGame, type Player, type Room } from "@/contexts/GameContext";
 import socket from "@/socket";
-
-// Avatars and colors for fallback
-const AVATARS = [Cat, Dog, Bird];
-const COLORS = ["bg-red-400", "bg-blue-400", "bg-green-400", "bg-yellow-400", "bg-purple-400", "bg-pink-400", "bg-indigo-400", "bg-teal-400"];
 
 export default function LobbyPage() {
   const { roomCode: paramRoomCode } = useParams();
@@ -21,6 +17,16 @@ export default function LobbyPage() {
   const [rounds, setRounds] = useState(room?.noOfRounds || 3);
   const [drawTime, setDrawTime] = useState(room?.turnDuration || 80);
 
+  // this will happen if the user directly goes to this page 
+  // instead of the landing page first 
+  useEffect(() => { 
+    if (!room?.id) { 
+      socket.emit("room.join",{
+        username: "no name ;)",
+        roomId: paramRoomCode,
+      })
+    } 
+  }, [])
   useEffect(() => {
     socket.on("room.updated", (data: { room : Room, players : Player[]}) => {
       setRoom(data.room)
@@ -30,7 +36,7 @@ export default function LobbyPage() {
         // if you're not the host 
         // go the game immediatly 
         if (!isHost) { 
-          navigate(`/game/${room?.id ?? ""}`)
+          navigate(`/game/${roomCode?? ""}`)
         }
       setRoom(data.room)
     })
@@ -43,7 +49,7 @@ export default function LobbyPage() {
         chooseHandler: onChooseWord, 
         startTimer: true,
       })
-      navigate(`/game/${room?.id ?? ""}`)
+      navigate(`/game/${roomCode ?? ""}`)
     })
     return () => {
       socket.off("room.updated");
@@ -116,16 +122,11 @@ export default function LobbyPage() {
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
               {players?.map((player, idx) => {
-                const Icon = AVATARS[idx % AVATARS.length];
-                const color = COLORS[idx % COLORS.length];
                 const isPlayerHost = room?.hostId === player.id;
                 
                 return (
                   <div key={player.id} className="flex items-center justify-between bg-zinc-100 p-3 rounded-2xl border border-zinc-300 transition-transform hover:-translate-y-1 hover:shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 flex items-center justify-center rounded-xl bg-white border-2 border-transparent ${color} bg-opacity-20`}>
-                        <Icon size={28} className={color.replace('bg-', 'text-')} strokeWidth={2.5} />
-                      </div>
                       <span className="text-xl font-bold text-slate-700">{player.username} {playerId === player.id ? "(You)" : ""}</span>
                     </div>
                     {isPlayerHost && (

@@ -69,49 +69,63 @@ export type GameOverState = {
 }
 
 export function GameHeader({ gameState }: { gameState: GameState }) {
-  const { room } = useGame();
+  const { room, correctWordLength } = useGame();
   const [timer, setTimer] = useState(0);
-  const intervalIdRef = useRef<number>(0);
+  const [timerConfig, setTimerConfig] = useState({ duration: 0, id: 0, stop: true });
+
+  // Timer configuration logic
+  useEffect(() => {
+    if (!("startTimer" in gameState)) {
+      setTimerConfig(prev => ({ ...prev, stop: true, id: Date.now() }));
+      return;
+    }
+
+    if (!gameState.startTimer) {
+      return;
+    }
+
+    let duration = 0;
+    if (gameState.state === "guessing" || gameState.state === "drawing") {
+      duration = room?.turnDuration || 0;
+    } else if (gameState.state === "waiting" || gameState.state === "choosing") {
+      duration = 15;
+    }
+
+    setTimerConfig({ duration, id: Date.now(), stop: false });
+  }, [gameState, room?.turnDuration]);
 
   // Timer countdown logic
   useEffect(() => {
-    // if state changes at all we reset the timer 
-    clearInterval(intervalIdRef.current as number)
-    if ((gameState?.state !== 'guessing' &&
-      gameState?.state !== 'drawing' &&
-      gameState?.state !== "waiting" &&
-      gameState?.state !== "choosing") || !("startTimer" in gameState) || !gameState.startTimer) return;
-    
+    if (timerConfig.stop) {
+      return;
+    }
 
-    if (gameState.state === "guessing" || gameState.state === "drawing") {
-      setTimer(room?.turnDuration || 0)
-    }
-    if (gameState.state === "waiting" || gameState.state === "choosing") {
-      setTimer(15) // the 15s 
-    }
-    intervalIdRef.current = setInterval(() => {
+    setTimer(timerConfig.duration);
+
+    const interval = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
-          clearInterval(intervalIdRef.current as number);
+          clearInterval(interval);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(intervalIdRef.current as number);
-  }, [gameState, room?.turnDuration]);
+    return () => clearInterval(interval);
+  }, [timerConfig]);
 
+  const wordLength = "wordLength" in gameState && gameState.wordLength ? gameState.wordLength : correctWordLength 
   const wordString = gameState.state === "choosing" || gameState.state === "waiting"
     ? "WAITING..." 
-    : (gameState.state === "guessing" && gameState.wordLength)
-      ? Array(gameState.wordLength).fill('_').join(' ')
+    : (gameState.state === "guessing" && wordLength)
+      ? Array(wordLength).fill('_').join(' ')
       : (gameState.state === "drawing" ? gameState.word.split('').join(' ') : "_ _ _ _ _ _");
 
   const hintString = gameState.state === "choosing" || gameState.state === "waiting"
     ? "Waiting for drawer"
-    : (gameState.state === "guessing" && gameState.wordLength)
-      ? `${gameState.wordLength} letters`
+    : (gameState.state === "guessing" && wordLength)
+      ? `${wordLength} letters`
       : "";
 
   return (
@@ -143,6 +157,10 @@ export default function GamePage() {
   const [gameState, setGameState] = useState<GameState>(initialState ?? {state : "waiting", startTimer: true} );
   const [chat,setChat] = useState<Message[]>([])
   useEffect(() => {
+    socket.on("room.updated", (data : { room: Room, players: Player[]}) => { 
+      setRoom(data.room); 
+      setPlayers(data.players)
+    })
     socket.on("game.words", (data : {words : string[]}) => { 
       setGameState( { 
         state: "choosing", 
@@ -213,6 +231,7 @@ export default function GamePage() {
         oldPlayers : data.oldPlayers
       })
       setPlayers(data.newPlayers)
+      setCorrectWordLength(0)
     })
     // this will be for the whole room
     // except the drawer 
@@ -231,16 +250,18 @@ export default function GamePage() {
       })
     })
     return () => { 
-      socket.off("game.words")
+      socket.off("room.updated");
+      socket.off("game.words");
       socket.off("game.word");
       socket.off("game.word_chosen");
       socket.off("game.turn_end"); 
-      socket.off("game.guess.close")
-      socket.off("game.guess.wrong")
-      socket.off("game.guess.correct")
-      socket.off("game.guess.chat")
-      socket.off("canvas.draw")
-      socket.off("game.turn_start")
+      socket.off("game.guess.close");
+      socket.off("game.guess.wrong");
+      socket.off("game.guess.correct");
+      socket.off("game.guess.chat");
+      socket.off("canvas.draw");
+      socket.off("game.turn_start");
+      socket.off("game.game_over");
     }
   }, [])
 
@@ -332,7 +353,12 @@ export default function GamePage() {
       {gameState.state === "game_over" && (
         <GameOverOverlay
           players={players}
-          onBackToHome={() => navigate("/")}
+          onBackToHome={() => { 
+            
+            setPlayers([]);
+            setRoom(null);  
+            navigate("/")
+          } }
         />
       )}
     </div>
