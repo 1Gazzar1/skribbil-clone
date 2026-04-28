@@ -1,6 +1,5 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://192.168.1.101:3000");
-// const socket = io("http://[IP_ADDRESS]")
+const socket = io(import.meta.env.VITE_SERVER_URL);
 
 export default socket;
